@@ -2,6 +2,20 @@ Testfile = 'test.in'
 Main = './main'
 Test = './test'
 
+def randi(i=100); (rand * i).floor; end
+def randp; (randi(2) == 0) ? '.' : 'x'; end
+
+def random_data
+  run_number, modulo = [randi + 2, randi(10000000) + 10]
+  patterns = (0...randi + 1).map do
+    (0...3).map { (0...3).map { randp } .join('') } .join("\n")
+  end
+
+  <<-EOF
+#{run_number} #{patterns.size} #{modulo}
+#{patterns.join("\n")}
+  EOF
+end
 
 def test(number, string)
   file = File.open(Testfile, 'w')
@@ -13,6 +27,7 @@ def test(number, string)
     out = `zsh -c 'cat #{Testfile} | time #{prog}'`
     result << out.split(' ').last.to_i
   end
+  number = result[1] if number == -1
   fail "Wrong, got #{result}, expected #{number}" unless result[0] == number && result[1] == number
 end
 
@@ -39,6 +54,8 @@ x..
 .x.
 x..
 EOF
+
+3.times { test(-1, random_data) }
 
 ###
 # Test = './test'
