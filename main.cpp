@@ -1,29 +1,60 @@
 #include <iostream>
 #include <cmath>
 #include <cassert>
-#include <set>
+#include <vector>
 using namespace std;
 
+#define AT(x, y) (x << y)
 // '.' -> 0, 'x' -> 1
 #define CHAR_TO_BIT(x) ((x % 4) != 2)
 #define THREE(x, y) ((x >> y) % 8)
-#define AT(x, y) (x << (y*3))
+#define TWO(x, y) ((x >> y) % 4)
+#define ONE(x, y) ((x >> y) % 2)
 
-// x -> edc ba9 876 543 210
+// Offsets
 // e 9 4
 // d 8 3
 // c 7 2
 // b 6 1
 // a 5 0
 
-// FIRST_CUBE(x) -> cba 765 210
-#define FIRST_CUBE(x) (AT(THREE(x, 0xA), 2) | AT(THREE(x, 0x5), 1) | AT(THREE(x, 0x0), 0))
+/* x = 876 543 210
+ * y = 543 210
+ * z = edc ba9 876 543 210
+ */
 
-// SECOND_CUBE(x) -> dcb 876 321
-#define SECOND_CUBE(x) (AT(THREE(x, 0xB), 2) | AT(THREE(x, 0x6), 1) | AT(THREE(x, 0x1), 0))
+/*
+ * x8 x5 x2
+ * x7 x4 x1
+ * x6 x3 x0
+ * y5 y3 y1
+ * y4 y2 y0
+ */
+//                          e d c               b a                 9 8 7             6 5               4 3 2             1 0
+// FIRST_CUBE(x, y) ->      x8x7x6              y5y4                x5x4x3            y3y2              x2x1x0            y1y0
+#define FIRST_CUBE(x, y) (AT(THREE(x, 6), 0xC)|AT(TWO(y, 4), 0xA)|AT(THREE(x, 3), 7)|AT(TWO(y, 2), 5)|AT(THREE(x, 0), 2)|AT(TWO(y, 0), 0))
 
-// THIRD_CUBE(x) -> edc 987 432
-#define THIRD_CUBE(x) (AT(THREE(x, 0xC), 2) | AT(THREE(x, 0x7), 1) | AT(THREE(x, 0x2), 0))
+/*
+ * y5 y3 y1
+ * x8 x5 x2
+ * x7 x4 x1
+ * x6 x3 x0
+ * y4 y2 y0
+ */
+//                            e                 d c b                 a 9             8 7 6               5 4             3 2 1               0
+// SECOND_CUBE(x, y) ->       y5                x8x7x6                y4y3            x5x4x3              y2y1            x2x1x0              y0
+#define SECOND_CUBE(x, y) (AT(ONE(y, 5), 0xE)|AT(THREE(x, 6), 0xB)|AT(TWO(y, 3), 9)|AT(THREE(x, 3), 6)|AT(TWO(y, 1), 4)|AT(THREE(x, 0), 1)|AT(ONE(y, 0), 0))
+
+/*
+ * y5 y3 y1
+ * y4 y2 y0
+ * x8 x5 x2
+ * x7 x4 x1
+ * x6 x3 x0
+ */
+//                          e d                 c b a               9 8             7 6 5               4 3               2 1 0
+// THIRD_CUBE(x, y) ->      y5y4                x8x7x6              y3y2            x5x4x3              y1y0              x2x1x0
+#define THIRD_CUBE(x, y) (AT(TWO(y, 4), 0xD)|AT(THREE(x, 6), 0xA)|AT(TWO(y, 2), 8)|AT(THREE(x, 3), 5)|AT(TWO(y, 0), 3)|AT(THREE(x, 0), 0))
 
 string three_str(int x, bool break_lines) {
   string ret = "";
@@ -37,7 +68,7 @@ string three_str(int x, bool break_lines) {
 }
 
 int size, modulo;
-set<int> forbidden_configurations;
+vector<bool> forbidden_configurations(1024u*32u, false);
 
 void read_data() {
   int forbidden_configurations_size;
@@ -47,9 +78,11 @@ void read_data() {
    * 0 1 2
    * 3 4 5
    * 6 7 8
+   * -----
+   * a b c
+   * d e f
    * ->
    *  0 3 6 | 1 4 7 | 2 5 8
-   *
    */
   cin.getline(line, 9); //Trash..
   for (int i = 0; i < forbidden_configurations_size; ++i)
@@ -58,7 +91,7 @@ void read_data() {
       cin.getline(line + j*3, 4);
     }
     line[9] = 0;
-    int forbidden_configuration = 0;
+    unsigned int forbidden_configuration = 0;
     forbidden_configuration += CHAR_TO_BIT(line[0]) << 8;
     forbidden_configuration += CHAR_TO_BIT(line[3]) << 7;
     forbidden_configuration += CHAR_TO_BIT(line[6]) << 6;
@@ -68,7 +101,12 @@ void read_data() {
     forbidden_configuration += CHAR_TO_BIT(line[2]) << 2;
     forbidden_configuration += CHAR_TO_BIT(line[5]) << 1;
     forbidden_configuration += CHAR_TO_BIT(line[8]);
-    forbidden_configurations.insert(forbidden_configuration);
+    for (unsigned int j = 0; j < 64u; ++j)
+    {
+      forbidden_configurations[FIRST_CUBE(forbidden_configuration, j)] = true;
+      forbidden_configurations[SECOND_CUBE(forbidden_configuration, j)] = true;
+      forbidden_configurations[THIRD_CUBE(forbidden_configuration, j)] = true;
+    }
 //    cout << forbidden_configuration << " is forbidden" << endl;
     /*
     for (int i = 8; i >= 0; --i) {
@@ -83,12 +121,8 @@ void read_data() {
 }
 
 bool forbidden(int configuration) {
-  int count_first = forbidden_configurations.count(FIRST_CUBE(configuration));
-  int count_second = forbidden_configurations.count(SECOND_CUBE(configuration));
-  int count_third = forbidden_configurations.count(THIRD_CUBE(configuration));
-  int count = count_first + count_second + count_third;
-
   /*
+  int count = forbidden_configurations.count(configuration);
   cout << "[" << configuration <<((count == 0) ? "✓" : "✕") << "]";
   if(count_first != 0) {
     cout << " 1st: " << FIRST_CUBE(configuration) << "(" << count_first << ")" << endl;
@@ -100,7 +134,7 @@ bool forbidden(int configuration) {
     cout << " 3rd: " << THIRD_CUBE(configuration) << "(" << count_third << ")" << endl;
   }
   */
-  return count != 0;
+  return forbidden_configurations[configuration];
 }
 
 #define CONFIGURATION_COUNT (1024u)
@@ -129,7 +163,7 @@ int* step_data(int step) {
         target[j] += count;
         target[j] %= modulo;
       }
-//      cout << three_str(configuration) << endl;
+//      cout << three_str(configuration, false) << endl;
     }
 //    cout << target[j] << endl;
   }
