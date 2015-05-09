@@ -7,7 +7,7 @@ using namespace std;
 
 int num, modulo;
 // x/1 -> black, ./0 -> white
-vector<string> wrong_patterns;
+vector<bool> wrong_patterns(1024*32, false);
 vector<string> list_of_all_patterns(32);
 vector<vector< vector<int> > > list_of(32, vector<vector <int> >(32, vector<int>(2,1)));
 
@@ -73,7 +73,7 @@ void handle_pattern(){
               { pos[i], pos[j], pat[0], pat[1], pat[2], pos[k], pos[l], pat[3], pat[4], pat[5], pos[m], pos[n], pat[6], pat[7], pat[8]}
               };
               for (int o = 0; o < 3; ++o) {
-                wrong_patterns.push_back(forbidden_pattern[o]);
+                wrong_patterns[binary(forbidden_pattern[o])] = true;
               }
             }
           }
@@ -81,23 +81,17 @@ void handle_pattern(){
       }
     }
   }
-  sort(wrong_patterns.begin(), wrong_patterns.end());
 }
 
 //Check how many is permutation which ends on rows drugi trzeci
 int ends_with(int drugi, int trzeci, int n){
-  printf("%d : ", (drugi * 32 + trzeci));
   int wynik = 0;
   for(int i=0; i<32; ++i){
     string merged_rows = list_of_all_patterns[i] + list_of_all_patterns[drugi] + list_of_all_patterns[trzeci];
-    if(!binary_search(wrong_patterns.begin(), wrong_patterns.end(), merged_rows)){
+    if(!wrong_patterns[binary(merged_rows)]){
       wynik += list_of[i][drugi][n];
-      printf("[%d✓]", binary(merged_rows));
-    } else {
-      printf("[%d✕]", binary(merged_rows));
     }
   }
-  printf("%d\n", wynik);
   return wynik;
 }
 

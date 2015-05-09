@@ -1,5 +1,6 @@
 Testfile = 'test.in'
 Main = './main'
+Test = './test'
 
 
 def test(number, string)
@@ -7,9 +8,12 @@ def test(number, string)
   file << string
   file.close
 
-  out = `zsh -c 'cat #{Testfile} | time #{Main}'`
-  result = out.split(' ').last.to_i
-  fail "Wrong, got #{result}, expected #{number}" unless result == number
+  result = []
+  [Main, Test].each do |prog|
+    out = `zsh -c 'cat #{Testfile} | time #{prog}'`
+    result << out.split(' ').last.to_i
+  end
+  fail "Wrong, got #{result}, expected #{number}" unless result[0] == number && result[1] == number
 end
 
 test 32592, <<-EOF
