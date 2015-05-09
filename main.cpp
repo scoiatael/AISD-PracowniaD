@@ -4,8 +4,8 @@
 #include <set>
 using namespace std;
 
-// '.' -> 1, 'x' -> 0
-#define CHAR_TO_BIT(x) ((x % 4) == 2)
+// '.' -> 0, 'x' -> 1
+#define CHAR_TO_BIT(x) ((x % 4) != 2)
 #define THREE(x, y) ((x >> y) % 8)
 #define AT(x, y) (x << (y*3))
 
@@ -38,6 +38,7 @@ string three_str(int x, bool break_lines) {
 
 int size, modulo;
 set<int> forbidden_configurations;
+
 void read_data() {
   int forbidden_configurations_size;
   cin >> size >> forbidden_configurations_size >> modulo;
@@ -68,8 +69,8 @@ void read_data() {
     forbidden_configuration += CHAR_TO_BIT(line[5]) << 1;
     forbidden_configuration += CHAR_TO_BIT(line[8]);
     forbidden_configurations.insert(forbidden_configuration);
+//    cout << forbidden_configuration << " is forbidden" << endl;
     /*
-    cout << forbidden_configuration << " is forbidden" << endl;
     for (int i = 8; i >= 0; --i) {
       cout << line[i];
       if((i % 3) == 0) {
@@ -87,16 +88,16 @@ bool forbidden(int configuration) {
   int count_third = forbidden_configurations.count(THIRD_CUBE(configuration));
   int count = count_first + count_second + count_third;
 
-  cout << "[" << configuration <<((count == 0) ? "✓" : "✕") << "]";
   /*
+  cout << "[" << configuration <<((count == 0) ? "✓" : "✕") << "]";
   if(count_first != 0) {
-    cout << "1st: " << FIRST_CUBE(configuration) << "(" << count_first << ")" << endl;
+    cout << " 1st: " << FIRST_CUBE(configuration) << "(" << count_first << ")" << endl;
   }
   if(count_second != 0) {
-    cout << "2nd: " << SECOND_CUBE(configuration) << "(" << count_second << ")" << endl;
+    cout << " 2nd: " << SECOND_CUBE(configuration) << "(" << count_second << ")" << endl;
   }
   if(count_third != 0) {
-    cout << "3rd: " << THIRD_CUBE(configuration) << "(" << count_third << ")" << endl;
+    cout << " 3rd: " << THIRD_CUBE(configuration) << "(" << count_third << ")" << endl;
   }
   */
   return count != 0;
@@ -116,7 +117,7 @@ int* step_data(int step) {
 
   for(unsigned int j=0; j < CONFIGURATION_COUNT; ++j) {
     target[j] = 0;
-    cout << j << " : ";
+//    cout << j << " : ";
     for(unsigned int i=0; i < 32u; ++i) {
       // | i (5 bits) | j (10 bits) |
       // |    edcba   |  9876543210 |
@@ -130,7 +131,7 @@ int* step_data(int step) {
       }
 //      cout << three_str(configuration) << endl;
     }
-    cout << target[j] << endl;
+//    cout << target[j] << endl;
   }
   return target;
 }
@@ -151,7 +152,7 @@ int crunch_data() {
   }
   for (int i = 2; i < size; ++i) {
     target = step_data(i);
-    cout << "(" << i << "): " << sum_all(target) << endl;
+ //   cout << "(" << i << "): " << sum_all(target) << endl;
   }
   return sum_all(target);
 }
